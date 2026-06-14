@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>React Performance Engineering — Dev Weekends</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:#050505;display:flex;align-items:center;justify-content:center;min-height:100vh}
+</style>
+</head>
+<body>
+<div id="deck" style="position:relative;width:100%;max-width:1200px;aspect-ratio:16/9;background:#070707;border-radius:12px;overflow:hidden;font-family:'Inter',system-ui,sans-serif;color:#f5f5f5;-webkit-font-smoothing:antialiased;">
+<style>
+.sl{position:absolute;inset:0;padding:5% 6%;display:none;flex-direction:column;background:#070707;background-image:radial-gradient(130% 80% at 50% -20%,rgba(255,255,255,.055),transparent 55%);overflow:hidden}
+.sl.on{display:flex;animation:up .4s ease both}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.wmk{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.045;pointer-events:none;font-family:'Anton',sans-serif;font-size:min(8vw,54px);text-transform:uppercase;white-space:nowrap;color:#fff;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;line-height:.95}
+.wmk span{font-size:.42em;letter-spacing:.25em;font-weight:600;font-family:'Inter',sans-serif}
+.sl>*:not(.wmk){position:relative;z-index:1}
+.tb{display:flex;align-items:center;gap:1.2em;margin-bottom:auto}
+.tb .hr{flex:1;height:1px;background:#262626}
+.tk{letter-spacing:.26em;text-transform:uppercase;font-weight:600;font-size:min(1.4vw,11px);color:#f5f5f5}
+.tk.dm{color:#5a5a5a}
+.pl{display:inline-flex;align-items:center;gap:.5em;border:1px solid #262626;border-radius:999px;padding:.5em 1em;font-size:min(1.2vw,10px);letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:#f5f5f5;white-space:nowrap}
+.pl.so{background:#f5f5f5;color:#0a0a0a;border-color:#f5f5f5}
+.dt{width:5px;height:5px;border-radius:50%;background:#f5f5f5}
+.pl.so .dt{background:#0a0a0a}
+.dp{font-family:'Anton',sans-serif;font-weight:400;line-height:.92;letter-spacing:.005em;text-transform:uppercase}
+.gh{color:#343434}
+.ld{color:#8c8c8c;font-size:min(2.2vw,18px);line-height:1.55;font-weight:400;max-width:46ch}
+.ld b{color:#f5f5f5;font-weight:600}
+.ld.nt{color:#5a5a5a;font-size:min(1.6vw,13px)}
+.ft{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1em;padding-top:2%}
+.ft .ur{font-size:min(1.4vw,12px);letter-spacing:.04em;color:#f5f5f5;font-weight:600}
+.ft .ur small{display:block;color:#5a5a5a;font-weight:400;margin-top:.3em}
+.ft .pg{font-size:min(1.3vw,11px);color:#5a5a5a;letter-spacing:.18em;font-weight:600}
+.cv .dp,.dv .dp{font-size:min(12vw,80px)}
+.mb{margin:auto 0}
+.hk{margin-bottom:1.2%}
+.ht{font-size:min(7vw,52px);margin-bottom:2%}
+.ht.sm{font-size:min(5.5vw,42px)}
+.rw{display:flex;flex-direction:column;gap:.45em;margin-top:.4%}
+.ri{display:flex;align-items:baseline;gap:1em;border-top:1px solid #1a1a1a;padding:.6em 0 .1em}
+.ri .rn{font-family:'Anton',sans-serif;color:#5a5a5a;font-size:min(2.4vw,20px);min-width:2em}
+.ri .rtt{font-weight:600;font-size:min(2vw,17px);color:#f5f5f5}
+.ri .rdd{color:#8c8c8c;font-size:min(1.6vw,14px);line-height:1.4}
+.ri .rtx{display:flex;flex-direction:column;gap:.15em}
+.tw{display:grid;grid-template-columns:1fr 1.05fr;gap:5%;flex:1;align-items:center}
+.tw .lf{display:flex;flex-direction:column;justify-content:center}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.7em;margin-top:.5%}
+.gc{border:1px solid #262626;border-radius:12px;padding:1.2em 1.1em;background:#0d0d0d;display:flex;flex-direction:column}
+.gc.fe{background:#f5f5f5;color:#0a0a0a;border-color:#f5f5f5}
+.gc .gn{font-family:'Anton',sans-serif;font-size:min(3.5vw,30px);color:#343434;line-height:1}
+.gc.fe .gn{color:#cfcfcf}
+.gc .gt{font-weight:700;font-size:min(1.9vw,16px);margin-top:.7em}
+.gc .gd{color:#8c8c8c;font-size:min(1.4vw,13px);line-height:1.45;margin-top:.4em}
+.gc.fe .gd{color:#3a3a3a}
+.gc .gg{margin-top:auto;padding-top:.8em;color:#5a5a5a;font-size:min(1.2vw,10px);letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.gc.fe .gg{color:#6a6a6a}
+.qw{flex:1;display:flex;flex-direction:column;justify-content:center}
+.qt{font-family:'Anton',sans-serif;font-size:min(5vw,40px);line-height:1.02;text-transform:uppercase;max-width:20ch}
+.qt .gh{color:#343434}
+.qs{color:#8c8c8c;font-size:min(1.8vw,15px);line-height:1.55;max-width:48ch;margin-top:2%}
+.cl .dp{font-size:min(10vw,72px)}
+.nv{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;z-index:50;background:rgba(15,15,15,.85);border:1px solid #262626;border-radius:999px;padding:5px 7px}
+.nv button{width:26px;height:26px;border-radius:50%;background:transparent;border:1px solid #262626;color:#f5f5f5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.nv button:hover{background:#f5f5f5;color:#0a0a0a}
+.nv .ct{font-size:10px;letter-spacing:.14em;color:#8c8c8c;font-weight:600;min-width:50px;text-align:center}
+</style>
+
+<!-- 00 · COVER -->
+<section class="sl on cv" data-s="0">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Dev Weekends</span><span class="hr"></span><span class="pl"><span class="dt"></span>Fellowship 2026</span></div>
+    <div class="mb">
+        <div class="tk dm" style="margin-bottom:1.4%">React Performance Engineering · Week 01</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">React<br><span class="gh">Performance</span></h1>
+        <p class="ld" style="margin-top:2%">Learn how React actually works under the hood — and use that knowledge to write apps that stay fast at any scale.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com<small>resources.devweekends.com</small></div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 01 · AGENDA -->
+<section class="sl" data-s="1">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Today</span><span class="hr"></span><span class="pl"><span class="dt"></span>Agenda</span></div>
+    <div class="tk dm hk">What we're covering</div>
+    <h2 class="dp ht sm">Today's <span class="gh">plan</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">React Internals</span><span class="rdd">Virtual DOM, reconciliation, and how the commit phase actually changes the DOM.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Re-render Control</span><span class="rdd">React.memo, useMemo, and useCallback — when they help and when they hurt.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Loading Strategy</span><span class="rdd">Code splitting, lazy loading images, and useTransition for non-blocking updates.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">List Virtualization + Advanced</span><span class="rdd">react-window, throttle, debounce, React fragments, and web workers.</span></div>
+        </div>
+        <div class="ri"><span class="rn">05</span>
+            <div class="rtx"><span class="rtt">DevTools Profiler</span><span class="rdd">How to find real bottlenecks — we'll run the profiler live after every section.</span></div>
+        </div>
+    </div>
+    <p class="ld nt" style="margin-top:1.6%">Each part ends with a live code walkthrough — we'll see every concept working in a real React project.</p>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 02 · SECTION: REACT INTERNALS -->
+<section class="sl dv" data-s="2">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Part 01</span><span class="hr"></span><span class="pl so"><span class="dt"></span>React Internals</span></div>
+    <div class="mb">
+        <div class="tk dm hk">Foundation first</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">React<br><span class="gh">Internals</span></h1>
+        <p class="ld" style="margin-top:2%">Before we can optimise React, we need to understand what it's actually doing on every render.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 03 · VIRTUAL DOM & RECONCILIATION -->
+<section class="sl" data-s="3">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Core Idea</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">How React avoids full DOM repaints</div>
+            <h2 class="dp ht sm">Virtual DOM &<br><span class="gh">Reconciliation</span></h2>
+            <p class="ld">React keeps a lightweight JavaScript copy of the DOM. When state changes, it builds a new virtual tree, diffs it against the old one, and only touches the real DOM nodes that actually changed.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">Virtual DOM</span><span class="rdd">A plain JS object tree representing your UI — cheap to create, cheap to compare.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">Diffing</span><span class="rdd">React compares old and new virtual trees to find the minimum set of real DOM changes needed.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">Fiber</span><span class="rdd">React's internal work unit. Each component is a fiber node; the fiber tree is what gets diffed.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">Keys</span><span class="rdd">Hints to the reconciler for tracking list items. Wrong keys = wrong diffing = subtle bugs.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 04 · THE RENDER CYCLE -->
+<section class="sl" data-s="4">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Walkthrough</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Step by Step</span></div>
+    <div class="tk dm hk">What happens on every state change</div>
+    <h2 class="dp ht sm">The<br><span class="gh">Render Cycle</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Trigger</span><span class="rdd">A setState call, prop change, or context update schedules a re-render for the affected component.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Render Phase</span><span class="rdd">React calls your component function and gets a new JSX tree. Pure — no DOM side-effects happen here.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Reconciliation</span><span class="rdd">React diffs the new fiber tree against the previous one and marks which nodes need to change.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Commit Phase</span><span class="rdd">React flushes all marked changes to the real DOM in one synchronous pass, then fires refs and effects.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 06 · SECTION: RE-RENDER CONTROL -->
+<section class="sl dv" data-s="6">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Part 02</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Re-render Control</span></div>
+    <div class="mb">
+        <div class="tk dm hk">The first lever you should pull</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">Re-render<br><span class="gh">Control</span></h1>
+        <p class="ld" style="margin-top:2%">Most performance bugs aren't slow code — they're too many renders of code that was already fast enough.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 07 · WHAT TRIGGERS RE-RENDERS -->
+<section class="sl" data-s="7">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Core Idea</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Know the enemy before you fight it</div>
+            <h2 class="dp ht sm">What Triggers<br><span class="gh">Re-renders</span></h2>
+            <p class="ld">A component re-renders when its state changes, its parent re-renders, or a context it consumes updates. Knowing each trigger tells you exactly which tool to apply.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">State change</span><span class="rdd">Calling a useState or useReducer setter always schedules a re-render for that component.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">Parent re-render</span><span class="rdd">By default, every child re-renders when its parent does — even if no props changed.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">Context update</span><span class="rdd">Any component consuming a context re-renders whenever the context value reference changes.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">Key change</span><span class="rdd">Changing a component's key prop unmounts and remounts it entirely — a full state reset.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 08 · REACT.MEMO -->
+<section class="sl" data-s="8">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Memoization</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Skipping unnecessary child renders</div>
+            <h2 class="dp ht sm">React<br><span class="gh">.memo</span></h2>
+            <p class="ld">React.memo wraps a component and skips re-rendering if props haven't changed (shallow compare). It's the first tool to reach for when a child re-renders too often because its parent does.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">Shallow compare</span><span class="rdd">Primitives compared by value. Objects and arrays must be stable references to be considered equal.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">Custom comparator</span><span class="rdd">Pass a second argument (prevProps, nextProps) =&gt; boolean for fine-grained control.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">When to use</span><span class="rdd">Expensive components whose props rarely change — charts, tables, heavy list rows.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">When NOT to use</span><span class="rdd">Components that almost always re-render — the comparison itself has a measurable cost.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 09 · USEMEMO & USECALLBACK -->
+<section class="sl" data-s="9">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Hooks</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Stable values and stable references</div>
+            <h2 class="dp ht sm">useMemo &<br><span class="gh">useCallback</span></h2>
+            <p class="ld">useMemo caches a computed value. useCallback caches a function reference. Both return the same reference until their dependency array changes — preventing unnecessary re-renders downstream.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">useMemo</span><span class="rdd">Caches expensive calculations: useMemo(() =&gt; heavyFn(data), [data]).</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">useCallback</span><span class="rdd">Stabilises function references passed as props to React.memo children.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">Dependency array</span><span class="rdd">Must list every reactive value the hook reads. Lint with eslint-plugin-react-hooks.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">The key rule</span><span class="rdd">Only worth it when the stable reference actually prevents downstream work — measure first.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 10 · MEMOIZATION TRAPS -->
+<section class="sl" data-s="10">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Watch Out</span><span class="hr"></span><span class="pl"><span class="dt"></span>Common Mistakes</span></div>
+    <div class="tk dm hk">Where developers go wrong</div>
+    <h2 class="dp ht sm">Memoization<br><span class="gh">Traps</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Memoising everything</span><span class="rdd">React.memo and useMemo have overhead. Adding them blindly makes code slower, not faster.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Unstable object deps</span><span class="rdd">Inline objects/arrays in a dep array break memoisation every render — { id } !== { id }.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Missing dependencies</span><span class="rdd">Stale closures from an incomplete dep array produce subtle bugs that are very hard to track down.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Wrong root cause</span><span class="rdd">Memoising a component that re-renders because of context won't help — fix the context shape instead.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 11 · LIVE DEMO: RE-RENDER CONTROL -->
+<!-- <section class="sl" data-s="11">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Live Demo</span><span class="hr"></span><span class="pl so"><span class="dt"></span>In Code</span></div>
+    <div class="tk dm hk">Open the React project</div>
+    <h2 class="dp ht sm">Demo:<br><span class="gh">Re-render Control</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Show the problem</span><span class="rdd">Update parent state. Watch every child highlight in DevTools — even children with no relevant prop changes.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Apply React.memo</span><span class="rdd">Wrap the expensive child. Record again — the component goes grey in the flamegraph. It skipped.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Stabilise with useCallback</span><span class="rdd">Without useCallback, the handler reference changes every render and breaks memo. Add it — memo holds.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Add useMemo for derived data</span><span class="rdd">Wrap the filtered/sorted list in useMemo. Show it only recomputes when the source data actually changes.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section> -->
+
+<!-- 12 · SECTION: LOADING STRATEGY -->
+<section class="sl dv" data-s="12">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Part 03</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Loading Strategy</span></div>
+    <div class="mb">
+        <div class="tk dm hk">Don't load what users haven't asked for yet</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">Loading<br><span class="gh">Strategy</span></h1>
+        <p class="ld" style="margin-top:2%">Shipping less JavaScript on first load and deferring heavy work keeps the app feeling instant from the start.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 13 · REACT.LAZY + SUSPENSE -->
+<section class="sl" data-s="13">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Code Splitting</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Ship only what the user needs right now</div>
+            <h2 class="dp ht sm">React.lazy +<br><span class="gh">Suspense</span></h2>
+            <p class="ld">React.lazy() imports a component only when it's rendered. Wrapped in Suspense, React shows a fallback while the JS chunk loads — no manual loading state required.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">React.lazy</span><span class="rdd">Dynamic import() under the hood — each lazy component becomes its own JS bundle chunk.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">Suspense</span><span class="rdd">Wraps lazy components; renders a fallback (spinner, skeleton) while the chunk is fetching.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">Route-level first</span><span class="rdd">Split at routes first — biggest gains, least complexity. Go deeper only if routes aren't enough.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">Nested Suspense</span><span class="rdd">Wrap sections independently so one slow chunk doesn't block loading the rest of the page.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 14 · ASYNC RENDERING PATTERNS -->
+<section class="sl" data-s="14">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Async Patterns</span></div>
+    <div class="tk dm hk">Keeping the UI responsive during heavy work</div>
+    <h2 class="dp ht sm">Async<br><span class="gh">Rendering</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">useTransition</span><span class="rdd">Marks a setState call as non-urgent. startTransition keeps inputs snappy; isPending drives a loading indicator.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">useDeferredValue</span><span class="rdd">Lets a derived value "lag behind" the urgent state — great for search/filter without wrapping setters.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Lazy image loading</span><span class="rdd">Add loading="lazy" to &lt;img&gt; tags — browsers defer off-screen image fetches natively, for free.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Intersection Observer</span><span class="rdd">Fires when an element enters the viewport — use for custom lazy loads, infinite scroll, and animations.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 15 · LIVE DEMO: LOADING STRATEGY -->
+<!-- <section class="sl" data-s="15">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Live Demo</span><span class="hr"></span><span class="pl so"><span class="dt"></span>In Code</span></div>
+    <div class="tk dm hk">Open the React project</div>
+    <h2 class="dp ht sm">Demo:<br><span class="gh">Loading Strategy</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Show the baseline bundle</span><span class="rdd">Open Network tab → hard refresh. Point to the single large JS bundle being loaded upfront.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Add React.lazy to a route</span><span class="rdd">Move a heavy component to a lazy import. Refresh — the chunk now loads only when that route is visited.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Add Suspense with a skeleton</span><span class="rdd">Wrap with a skeleton fallback. Navigate to the route and show the skeleton UI before the chunk arrives.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Add useTransition to search</span><span class="rdd">Wrap setQuery in startTransition. Type rapidly — the input stays at 60fps while results update in the background.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section> -->
+
+<!-- 16 · SECTION: LIST VIRTUALIZATION -->
+<section class="sl dv" data-s="16">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Part 04</span><span class="hr"></span><span class="pl so"><span class="dt"></span>List Virtualization</span></div>
+    <div class="mb">
+        <div class="tk dm hk">Render 20 rows at a time, not 20,000</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">List<br><span class="gh">Virtualization</span></h1>
+        <p class="ld" style="margin-top:2%">Long lists destroy performance because the DOM has to hold every node. Virtualization keeps only the visible rows alive.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 17 · REACT-WINDOW -->
+<section class="sl" data-s="17">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Library</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Only visible rows live in the DOM</div>
+            <h2 class="dp ht sm">react<br><span class="gh">-window</span></h2>
+            <p class="ld">react-window renders only the rows visible in the viewport. Every other row is a calculated offset — no DOM node, no memory, no render cost. Works for lists and grids.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">FixedSizeList</span><span class="rdd">All rows the same height. Simplest API — start here for uniform data like product or user lists.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">VariableSizeList</span><span class="rdd">Each row reports its own height via a getItemSize function — more flexible for mixed content.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">FixedSizeGrid</span><span class="rdd">2D virtualization for tables and image grids — rows and columns are both windowed.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">overscanCount</span><span class="rdd">Renders a few extra rows above and below the viewport to hide scroll jank on fast scrolls.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 18 · LIVE DEMO: LIST VIRTUALIZATION -->
+<!-- <section class="sl" data-s="18">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Live Demo</span><span class="hr"></span><span class="pl so"><span class="dt"></span>In Code</span></div>
+    <div class="tk dm hk">Open the React project</div>
+    <h2 class="dp ht sm">Demo:<br><span class="gh">List Virtualization</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Render 5,000 items with .map</span><span class="rdd">Open DevTools Elements tab. Show 5,000 div nodes sitting in the DOM at once.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Profile the scroll</span><span class="rdd">Record while scrolling. Point to the constant re-renders and layout recalculations in the flamegraph.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Replace with FixedSizeList</span><span class="rdd">Swap .map for react-window's FixedSizeList. Inspect the DOM again — only ~15 nodes regardless of list length.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Profile again</span><span class="rdd">Record the same scroll. The flamegraph is nearly empty. Smooth, consistent 60fps.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section> -->
+
+<!-- 19 · SECTION: ADVANCED TECHNIQUES -->
+<section class="sl dv" data-s="19">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Part 05</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Advanced Techniques</span></div>
+    <div class="mb">
+        <div class="tk dm hk">The tools that separate good apps from great ones</div>
+        <h1 class="dp" style="font-size:min(12vw,80px)">Advanced<br><span class="gh">Techniques</span></h1>
+        <p class="ld" style="margin-top:2%">Throttling, debouncing, fragments, web workers, and how to find real bottlenecks with the profiler.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 20 · THROTTLE & DEBOUNCE -->
+<section class="sl" data-s="20">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>Event Control</span></div>
+    <div class="tw">
+        <div class="lf">
+            <div class="tk dm hk">Limit how often expensive work fires</div>
+            <h2 class="dp ht sm">Throttle &<br><span class="gh">Debounce</span></h2>
+            <p class="ld">Both limit how often a function fires. Debounce waits until a burst stops. Throttle fires at most once per interval. The wrong choice makes UIs feel laggy or unresponsive.</p>
+        </div>
+        <div class="rw">
+            <div class="ri"><span class="rn">01</span>
+                <div class="rtx"><span class="rtt">Debounce</span><span class="rdd">Delays execution until N ms after the last call. Use for search inputs and form validation.</span></div>
+            </div>
+            <div class="ri"><span class="rn">02</span>
+                <div class="rtx"><span class="rtt">Throttle</span><span class="rdd">Guarantees at most one call per interval. Use for scroll, resize, and mouse-move handlers.</span></div>
+            </div>
+            <div class="ri"><span class="rn">03</span>
+                <div class="rtx"><span class="rtt">300–500 ms sweet spot</span><span class="rdd">Search debounce: 300 ms feels instant. API call debounce: 500 ms prevents over-fetching.</span></div>
+            </div>
+            <div class="ri"><span class="rn">04</span>
+                <div class="rtx"><span class="rtt">Cleanup</span><span class="rdd">Always clear timeouts in the useEffect cleanup function to avoid stale calls after unmount.</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 21 · FRAGMENTS & WEB WORKERS -->
+<section class="sl" data-s="21">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Concept</span><span class="hr"></span><span class="pl"><span class="dt"></span>DOM &amp; Threads</span></div>
+    <div class="tk dm hk">Keep the DOM lean and the main thread free</div>
+    <h2 class="dp ht sm">Fragments &<br><span class="gh">Web Workers</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">React.Fragment / &lt;&gt;</span><span class="rdd">Groups children without adding a wrapper DOM node — keeps markup clean and avoids layout side-effects.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Keyed fragments</span><span class="rdd">Use &lt;Fragment key={id}&gt; when mapping — you cannot put a key on the shorthand &lt;&gt; syntax.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Web Workers</span><span class="rdd">Move heavy computation off the main thread. React renders on the main thread — workers run in parallel.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">comlink / workerize</span><span class="rdd">Libraries that wrap workers with a clean async API — call worker functions like normal async functions.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 22 · REACT DEVTOOLS PROFILER -->
+<section class="sl" data-s="22">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Walkthrough</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Step by Step</span></div>
+    <div class="tk dm hk">Measure before you optimise</div>
+    <h2 class="dp ht sm">DevTools<br><span class="gh">Profiler</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Install &amp; open</span><span class="rdd">Install the React DevTools browser extension, open DevTools, and navigate to the Profiler tab.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Record a session</span><span class="rdd">Click Record, interact with the slow part of the app, then stop. React captures every render.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Read the flamegraph</span><span class="rdd">Each bar is a component. Width = render time. Grey = did not render in this commit.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Why did this render?</span><span class="rdd">Click any bar to see exactly which prop or state change triggered that specific render.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 23 · PERFORMANCE ANTI-PATTERNS -->
+<section class="sl" data-s="23">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Watch Out</span><span class="hr"></span><span class="pl"><span class="dt"></span>Anti-Patterns</span></div>
+    <div class="tk dm hk">Where experienced developers still go wrong</div>
+    <h2 class="dp ht sm">Performance<br><span class="gh">Anti-Patterns</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Inline functions in JSX</span><span class="rdd">&lt;Button onClick={() =&gt; ...}&gt; creates a new function every render, silently breaking React.memo on the child.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Context as a global store</span><span class="rdd">One context update re-renders every consumer — split contexts by update frequency or use Zustand/Jotai.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Syncing state from props</span><span class="rdd">useEffect(() =&gt; setState(prop), [prop]) causes double-renders. Compute in render or useMemo instead.</span></div>
+        </div>
+        <div class="ri"><span class="rn">!</span>
+            <div class="rtx"><span class="rtt">Skipping the profiler</span><span class="rdd">Optimising by instinct is guesswork that often makes things worse. Always measure before you fix.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 24 · LIVE DEMO: ADVANCED + PROFILING -->
+<!-- <section class="sl" data-s="24">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Live Demo</span><span class="hr"></span><span class="pl so"><span class="dt"></span>In Code</span></div>
+    <div class="tk dm hk">Open the React project</div>
+    <h2 class="dp ht sm">Demo:<br><span class="gh">Advanced + Profiling</span></h2>
+    <div class="rw">
+        <div class="ri"><span class="rn">01</span>
+            <div class="rtx"><span class="rtt">Live debounce</span><span class="rdd">Type quickly without debounce — watch the Network tab fire on every keystroke. Add debounce — one clean request after typing stops.</span></div>
+        </div>
+        <div class="ri"><span class="rn">02</span>
+            <div class="rtx"><span class="rtt">Fragment cleanup</span><span class="rdd">Show a component producing an unnecessary wrapper div in Elements tab. Switch to &lt;&gt; — wrapper gone, layout unchanged.</span></div>
+        </div>
+        <div class="ri"><span class="rn">03</span>
+            <div class="rtx"><span class="rtt">Full profiler walkthrough</span><span class="rdd">Record a session from app start. Walk through the flamegraph live and click "Why did this render?" on the worst offender.</span></div>
+        </div>
+        <div class="ri"><span class="rn">04</span>
+            <div class="rtx"><span class="rtt">Before vs after</span><span class="rdd">Compare the first profile (nothing optimised) to the current one. Put render times side-by-side and show the delta.</span></div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section> -->
+
+<!-- 25 · KEY IDEA -->
+<section class="sl" data-s="25">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Key Idea</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Remember This</span></div>
+    <div class="qw">
+        <div class="qt">Performance is<br><span class="gh">measured,</span><br>not assumed</div>
+        <p class="qs">Profile first, optimise second, and only fix what's actually slow. Every technique you learned today is a solution — the profiler tells you which problem you actually have.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 26 · RESOURCES -->
+<section class="sl" data-s="26">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">After This Session</span><span class="hr"></span><span class="pl"><span class="dt"></span>Resources</span></div>
+    <div class="tk dm hk">Keep going</div>
+    <h2 class="dp ht sm">What to do<br><span class="gh">next</span></h2>
+    <div class="g3">
+        <div class="gc">
+            <div class="gt">Practice</div>
+            <div class="gd">Build a virtualised dashboard with live search, filtering, and react-window. Profile it before and after each optimisation to see real numbers.</div>
+            <div class="gg">resources.devweekends.com</div>
+        </div>
+        <div class="gc fe">
+            <div class="gt">Read</div>
+            <div class="gd" style="color:#3a3a3a">react.dev/learn — Skipping re-renders with memo, useMemo reference, useTransition, and the Profiling guide. All free and official.</div>
+            <div class="gg" style="color:#6a6a6a">react.dev / learn</div>
+        </div>
+        <div class="gc">
+            <div class="gt">Next session</div>
+            <div class="gd">Check Discord for next week's topic and any pre-reading. Recording of today's session will be up within 24 hours.</div>
+            <div class="gg">discord.gg/devweekends</div>
+        </div>
+    </div>
+    <div class="ft">
+        <div class="ur">resources.devweekends.com</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<!-- 27 · Q&A -->
+<section class="sl dv cl" data-s="27">
+    <div class="wmk">Dev<span>{Weekends}</span></div>
+    <div class="tb"><span class="tk">Open Floor</span><span class="hr"></span><span class="pl so"><span class="dt"></span>Ask Anything</span></div>
+    <div class="mb">
+        <div class="tk dm hk">Your turn</div>
+        <h1 class="dp" style="font-size:min(10vw,72px)">Questions<span class="gh">?</span></h1>
+        <p class="ld" style="margin-top:2%">Recording will be up within 24 hours. Ask follow-ups on Discord anytime.</p>
+    </div>
+    <div class="ft">
+        <div class="ur">discord.gg/devweekends</div>
+        <div class="pg"></div>
+    </div>
+</section>
+
+<div class="nv">
+    <button id="prv">&#8592;</button>
+    <span class="ct" id="ct">01 / 28</span>
+    <button id="nxt">&#8594;</button>
+</div>
+</div>
+<script>
+    var sls = document.querySelectorAll('.sl'), ct = document.getElementById('ct'), tot = sls.length, cur = 0;
+    function pad(n) { return String(n).padStart(2, '0') }
+    sls.forEach(function (s, i) { var p = s.querySelector('.pg'); if (p) p.textContent = pad(i + 1) + ' / ' + pad(tot); });
+    function go(n) { cur = Math.max(0, Math.min(tot - 1, n)); sls.forEach(function (s, i) { if (i === cur) { s.classList.add('on'); s.style.display = 'flex' } else { s.classList.remove('on'); s.style.display = 'none' } }); ct.textContent = pad(cur + 1) + ' / ' + pad(tot); }
+    document.getElementById('nxt').onclick = function () { go(cur + 1) };
+    document.getElementById('prv').onclick = function () { go(cur - 1) };
+    document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(cur + 1) } if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1) } });
+    go(0);
+</script>
+</body>
+</html>
